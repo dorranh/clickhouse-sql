@@ -13,7 +13,7 @@ and other use cases.
 
 # TODO:
 
-- [ ] Nix flake
-- [ ] Compilation for ClickHouse parser lib
+- [x] Nix flake
+- [x] Compilation for ClickHouse parser lib
 - [ ] Functional binding generation (goal is for read only bindings for
       starters)
