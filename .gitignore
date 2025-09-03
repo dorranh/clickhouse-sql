@@ -181,3 +181,4 @@ _skbuild/macosx-11.0-arm64-3.11/cmake-build
 
 tmp/ClickHouse
 .DS_Store
+_skbuild

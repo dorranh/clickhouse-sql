@@ -34,13 +34,9 @@ requires = [
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
-cmake.args = [
-    # "-DCMAKE_OSX_SYSROOT==/nix/store/zm6nfi7l8yq7s0i3m52pxj00nr3n76j5-apple-sdk-15.2/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
-    # "-DCMAKE_OSX_SYSROOT=$SDKROOT"
-    # "-Dpybind11_DIR=.venv/lib/python3.11/site-packages/pybind11/share/cmake/pybind11",
-    # "-DCMAKE_CXX_FLAGS=-Wno-error=offsetof-within-non-standard-layout",
-    # "-DABSL_PROPAGATE_CXX_STD=ON",
-]
+build-dir = "_skbuild"
+cmake.args = []
+
 wheel.expand-macos-universal-tags = true
 wheel.packages = ["_stubs/clickhouse_sql"]
 

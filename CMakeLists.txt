@@ -23,87 +23,87 @@ include(litgen_cmake/litgen_cmake.cmake)
 #####################################################################
 
 # # Set ClickHouse build directory
-# set(CLICKHOUSE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tmp/ClickHouse)
-# set(CLICKHOUSE_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/clickhouse-build)
+set(CLICKHOUSE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tmp/ClickHouse)
+set(CLICKHOUSE_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/clickhouse-build)
 
-# ExternalProject_Add(clickhouse_external
-#     SOURCE_DIR ${CLICKHOUSE_SOURCE_DIR}
-#     BINARY_DIR ${CLICKHOUSE_BUILD_DIR}
-#     CMAKE_ARGS
-#         -DCMAKE_BUILD_TYPE=Release
-#         # ClickHouse should use the Nix clang from the shell but with its own libc++ settings
-#         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-#         # -DCMAKE_C_COMPILER=${CMAKE_CXX_COMPILER} I can likely remove this, but leaving for now just in case. The generated value is incorrect though.
-#         -DENABLE_LIBRARIES=OFF
-#         # TODO: Some of these flags are not necessary:
-#         # CLICKHOUSE_SPLIT_BINARY
-#         # ENABLE_CLICKHOUSE_BENCHMARK
-#         # ENABLE_CLICKHOUSE_CLIENT
-#         # ENABLE_CLICKHOUSE_COMPRESSOR
-#         # ENABLE_CLICKHOUSE_COPIER
-#         # ENABLE_CLICKHOUSE_DISKS
-#         # ENABLE_CLICKHOUSE_EXTRACT_FROM_CONFIG
-#         # ENABLE_CLICKHOUSE_FORMAT
-#         # ENABLE_CLICKHOUSE_INSTALL
-#         # ENABLE_CLICKHOUSE_LOCAL
-#         # ENABLE_CLICKHOUSE_OBFUSCATOR
-#         # ENABLE_CLICKHOUSE_SERVER
-#         # ENABLE_CLICKHOUSE_STATIC_FILES_DISK_UPLOADER
-#         # ENABLE_CLICKHOUSE_SU
-#         # ENABLE_PROGRAMS
-#         -DENABLE_TESTS=OFF
-#         -DENABLE_BENCHMARKS=OFF
-#         -DENABLE_UTILS=OFF
-#         -DENABLE_PROGRAMS=OFF
-#         -DCLICKHOUSE_SPLIT_BINARY=OFF
-#         -DENABLE_CLICKHOUSE_ALL=OFF
-#         -DENABLE_CLICKHOUSE_SERVER=OFF
-#         -DENABLE_CLICKHOUSE_CLIENT=OFF
-#         -DENABLE_CLICKHOUSE_LOCAL=OFF
-#         -DENABLE_CLICKHOUSE_BENCHMARK=OFF
-#         -DENABLE_CLICKHOUSE_EXTRACT_FROM_CONFIG=OFF
-#         -DENABLE_CLICKHOUSE_COMPRESSOR=OFF
-#         -DENABLE_CLICKHOUSE_COPIER=OFF
-#         -DENABLE_CLICKHOUSE_FORMAT=OFF
-#         -DENABLE_CLICKHOUSE_OBFUSCATOR=OFF
-#         -DENABLE_CLICKHOUSE_GIT_IMPORT=OFF
-#         -DENABLE_CLICKHOUSE_STATIC_FILES_DISK_UPLOADER=OFF
-#         -DENABLE_CLICKHOUSE_SU=OFF
-#         -DENABLE_CLICKHOUSE_INSTALL=OFF
-#         -DENABLE_CLICKHOUSE_DISKS=OFF
-#         -DENABLE_CLICKHOUSE_KEEPER=OFF
-#         -DENABLE_CLICKHOUSE_KEEPER_CONVERTER=OFF
-#         -DENABLE_CLICKHOUSE_SELF_EXTRACTING=OFF
-#     BUILD_COMMAND ${CMAKE_COMMAND} --build . --target clickhouse_parsers clickhouse_common_io common --parallel
-#     INSTALL_COMMAND ""
-#     BUILD_BYPRODUCTS
-#         ${CLICKHOUSE_BUILD_DIR}/src/libclickhouse_parsers.a
-#         ${CLICKHOUSE_BUILD_DIR}/src/libclickhouse_common_io.a
-#         ${CLICKHOUSE_BUILD_DIR}/base/libcommon.a
-# )
+ExternalProject_Add(clickhouse_external
+    SOURCE_DIR ${CLICKHOUSE_SOURCE_DIR}
+    BINARY_DIR ${CLICKHOUSE_BUILD_DIR}
+    CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=Release
+        # ClickHouse should use the Nix clang from the shell but with its own libc++ settings
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        # -DCMAKE_C_COMPILER=${CMAKE_CXX_COMPILER} I can likely remove this, but leaving for now just in case. The generated value is incorrect though.
+        -DENABLE_LIBRARIES=OFF
+        # TODO: Some of these flags are not necessary:
+        # CLICKHOUSE_SPLIT_BINARY
+        # ENABLE_CLICKHOUSE_BENCHMARK
+        # ENABLE_CLICKHOUSE_CLIENT
+        # ENABLE_CLICKHOUSE_COMPRESSOR
+        # ENABLE_CLICKHOUSE_COPIER
+        # ENABLE_CLICKHOUSE_DISKS
+        # ENABLE_CLICKHOUSE_EXTRACT_FROM_CONFIG
+        # ENABLE_CLICKHOUSE_FORMAT
+        # ENABLE_CLICKHOUSE_INSTALL
+        # ENABLE_CLICKHOUSE_LOCAL
+        # ENABLE_CLICKHOUSE_OBFUSCATOR
+        # ENABLE_CLICKHOUSE_SERVER
+        # ENABLE_CLICKHOUSE_STATIC_FILES_DISK_UPLOADER
+        # ENABLE_CLICKHOUSE_SU
+        # ENABLE_PROGRAMS
+        -DENABLE_TESTS=OFF
+        -DENABLE_BENCHMARKS=OFF
+        -DENABLE_UTILS=OFF
+        -DENABLE_PROGRAMS=OFF
+        -DCLICKHOUSE_SPLIT_BINARY=OFF
+        -DENABLE_CLICKHOUSE_ALL=OFF
+        -DENABLE_CLICKHOUSE_SERVER=OFF
+        -DENABLE_CLICKHOUSE_CLIENT=OFF
+        -DENABLE_CLICKHOUSE_LOCAL=OFF
+        -DENABLE_CLICKHOUSE_BENCHMARK=OFF
+        -DENABLE_CLICKHOUSE_EXTRACT_FROM_CONFIG=OFF
+        -DENABLE_CLICKHOUSE_COMPRESSOR=OFF
+        -DENABLE_CLICKHOUSE_COPIER=OFF
+        -DENABLE_CLICKHOUSE_FORMAT=OFF
+        -DENABLE_CLICKHOUSE_OBFUSCATOR=OFF
+        -DENABLE_CLICKHOUSE_GIT_IMPORT=OFF
+        -DENABLE_CLICKHOUSE_STATIC_FILES_DISK_UPLOADER=OFF
+        -DENABLE_CLICKHOUSE_SU=OFF
+        -DENABLE_CLICKHOUSE_INSTALL=OFF
+        -DENABLE_CLICKHOUSE_DISKS=OFF
+        -DENABLE_CLICKHOUSE_KEEPER=OFF
+        -DENABLE_CLICKHOUSE_KEEPER_CONVERTER=OFF
+        -DENABLE_CLICKHOUSE_SELF_EXTRACTING=OFF
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --target clickhouse_parsers clickhouse_common_io common --parallel
+    INSTALL_COMMAND ""
+    BUILD_BYPRODUCTS
+        ${CLICKHOUSE_BUILD_DIR}/src/libclickhouse_parsers.a
+        ${CLICKHOUSE_BUILD_DIR}/src/libclickhouse_common_io.a
+        ${CLICKHOUSE_BUILD_DIR}/base/libcommon.a
+)
 
-# # Create imported targets for the ClickHouse libraries
-# add_library(clickhouse_parsers_lib STATIC IMPORTED)
-# set_target_properties(clickhouse_parsers_lib PROPERTIES
-#     IMPORTED_LOCATION ${CLICKHOUSE_BUILD_DIR}/src/libclickhouse_parsers.a
-# )
-# add_dependencies(clickhouse_parsers_lib clickhouse_external)
+# Create imported targets for the ClickHouse libraries
+add_library(clickhouse_parsers_lib STATIC IMPORTED)
+set_target_properties(clickhouse_parsers_lib PROPERTIES
+    IMPORTED_LOCATION ${CLICKHOUSE_BUILD_DIR}/src/libclickhouse_parsers.a
+)
+add_dependencies(clickhouse_parsers_lib clickhouse_external)
 
-# add_library(clickhouse_common_io_lib STATIC IMPORTED)
-# set_target_properties(clickhouse_common_io_lib PROPERTIES
-#     IMPORTED_LOCATION ${CLICKHOUSE_BUILD_DIR}/src/libclickhouse_common_io.a
-# )
-# add_dependencies(clickhouse_common_io_lib clickhouse_external)
+add_library(clickhouse_common_io_lib STATIC IMPORTED)
+set_target_properties(clickhouse_common_io_lib PROPERTIES
+    IMPORTED_LOCATION ${CLICKHOUSE_BUILD_DIR}/src/libclickhouse_common_io.a
+)
+add_dependencies(clickhouse_common_io_lib clickhouse_external)
 
-# add_library(clickhouse_common_lib STATIC IMPORTED)
-# set_target_properties(clickhouse_common_lib PROPERTIES
-#     IMPORTED_LOCATION ${CLICKHOUSE_BUILD_DIR}/base/libcommon.a
-# )
-# add_dependencies(clickhouse_common_lib clickhouse_external)
+add_library(clickhouse_common_lib STATIC IMPORTED)
+set_target_properties(clickhouse_common_lib PROPERTIES
+    IMPORTED_LOCATION ${CLICKHOUSE_BUILD_DIR}/base/libcommon.a
+)
+add_dependencies(clickhouse_common_lib clickhouse_external)
 
-# # Set the headers directory. We need this for generating pybind11 bindings
-# set(CLICKHOUSE_HEADERS_DIR "${CLICKHOUSE_SOURCE_DIR}/src/Parsers" CACHE STRING "Path to ClickHouse headers")
-# message(STATUS "CLICKHOUSE_HEADERS_DIR set to: ${CLICKHOUSE_HEADERS_DIR}")
+# Set the headers directory. We need this for generating pybind11 bindings
+set(CLICKHOUSE_HEADERS_DIR "${CLICKHOUSE_SOURCE_DIR}/src/Parsers" CACHE STRING "Path to ClickHouse headers")
+message(STATUS "CLICKHOUSE_HEADERS_DIR set to: ${CLICKHOUSE_HEADERS_DIR}")
 
 #####################################################################
 # Dummy library setup
