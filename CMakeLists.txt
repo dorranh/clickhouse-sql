@@ -44,6 +44,9 @@ target_compile_options(_clickhouse_sql PRIVATE
     -Wno-error=offsetof-within-non-standard-layout
     # Allow C++23 extensions since ClickHouse uses them (uz suffix literals)
     -Wno-c++23-extensions
+    # Match ClickHouse's visibility settings to avoid weak symbol conflicts
+    -fvisibility=hidden
+    -fvisibility-inlines-hidden
     # Force use of Nix libc++ headers to avoid Apple system header conflicts
     -nostdinc++
 )
@@ -75,6 +78,15 @@ target_link_libraries(_clickhouse_sql
     PRIVATE
     dummy_lib
     ${CLICKHOUSE_LIBRARIES}
+)
+
+# Fix libc++ runtime mixing by forcing Nix libc++
+target_link_options(_clickhouse_sql PRIVATE
+    # Force use of Nix libc++ at runtime to avoid mixing with system libc++
+    -Wl,-rpath,/nix/store/nzvfa327cd5gan08ijkn465kbanbizpg-libcxx-19.1.7/lib
+    # Ensure we link to the correct libc++
+    -L/nix/store/nzvfa327cd5gan08ijkn465kbanbizpg-libcxx-19.1.7/lib
+    -lc++
 )
 
 #     # System libraries that ClickHouse might need

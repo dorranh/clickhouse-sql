@@ -23,6 +23,7 @@
           # General c++ tooling
           pkgs.cmake
           pkgs.ccache
+          pkgs.lldb
           pkgs.llvmPackages_19.llvm
           pkgs.llvmPackages_19.lld
           pkgs.llvmPackages_19.clang

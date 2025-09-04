@@ -128,7 +128,8 @@ def autogenerate() -> None:
 
     # Now add in the ClickHouse headers from tmp/ClickHouse/src/Parsers as well
     header_search_dir = Path(repository_dir + "/tmp/ClickHouse/src/Parsers")
-    header_files.extend(list(header_search_dir.glob("Lexer*.h")))
+    header_files.extend(list(header_search_dir.glob("Lexer.h"))) # This works
+    header_files.extend(list(header_search_dir.glob("ParserQuery.h"))) # Testing this one which has a much larger footprint
 
     print(f"Processing headers: {header_files}")
 
