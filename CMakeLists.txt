@@ -92,13 +92,18 @@ target_link_libraries(_clickhouse_sql
     ${CLICKHOUSE_LIBRARIES}
 )
 
-# Fix libc++ runtime mixing by forcing Nix libc++
+# Static linking configuration for portable, self-contained wheel
 target_link_options(_clickhouse_sql PRIVATE
-    # Force use of Nix libc++ at runtime to avoid mixing with system libc++
+    # Use ClickHouse's bundled libc++ statically (no system/Nix libc++)
+    -nostdlib++
+    # Link ClickHouse's static libc++ explicitly
+    -L${CMAKE_BINARY_DIR}/clickhouse-build/contrib/libcxx-cmake
+    -lcxx
+    # Remove any unnecessary dynamic library dependencies
+    -Wl,-dead_strip_dylibs
+    -Wl,-dead_strip
+    # Keep the Nix libc++ path for compilation compatibility but prefer static linking
     -Wl,-rpath,/nix/store/nzvfa327cd5gan08ijkn465kbanbizpg-libcxx-19.1.7/lib
-    # Ensure we link to the correct libc++
-    -L/nix/store/nzvfa327cd5gan08ijkn465kbanbizpg-libcxx-19.1.7/lib
-    -lc++
 )
 
 #     # System libraries that ClickHouse might need
