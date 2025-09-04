@@ -1,0 +1,57 @@
+diff --git a/ClickHouseConfig.cmake b/ClickHouseConfig.cmake
+new file mode 100644
+index 00000000..778105c0
+--- /dev/null
++++ b/ClickHouseConfig.cmake
+@@ -0,0 +1,51 @@
++# ClickHouseConfig.cmake - CMake configuration file for ClickHouse
++# This file allows external projects to find and use ClickHouse targets
++
++# Prevent multiple inclusions
++if(TARGET clickhouse_parsers)
++    return()
++endif()
++
++# Store the directory where this config file is located
++get_filename_component(CLICKHOUSE_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
++get_filename_component(CLICKHOUSE_ROOT_DIR "${CLICKHOUSE_CMAKE_DIR}" ABSOLUTE)
++
++# Set ClickHouse paths
++set(CLICKHOUSE_SOURCE_DIR "${CLICKHOUSE_ROOT_DIR}")
++set(CLICKHOUSE_INCLUDE_DIRS
++    "${CLICKHOUSE_SOURCE_DIR}/src"
++    "${CLICKHOUSE_SOURCE_DIR}/base"
++    "${CMAKE_CURRENT_BINARY_DIR}/includes/configs"
++    "${CMAKE_CURRENT_BINARY_DIR}/base"
++)
++
++# Configure ClickHouse build options to disable everything we don't need
++set(ENABLE_LIBRARIES OFF CACHE BOOL "")
++set(ENABLE_TESTS OFF CACHE BOOL "")
++set(ENABLE_BENCHMARKS OFF CACHE BOOL "")
++set(ENABLE_UTILS OFF CACHE BOOL "")
++set(ENABLE_PROGRAMS OFF CACHE BOOL "")
++set(CLICKHOUSE_SPLIT_BINARY OFF CACHE BOOL "")
++set(ENABLE_CLICKHOUSE_ALL OFF CACHE BOOL "")
++# Server executable control - this doesn't affect libraries
++set(ENABLE_CLICKHOUSE_SERVER OFF CACHE BOOL "")
++set(ENABLE_CLICKHOUSE_CLIENT OFF CACHE BOOL "")
++set(ENABLE_CLICKHOUSE_LOCAL OFF CACHE BOOL "")
++
++# Include ClickHouse's build system
++add_subdirectory("${CLICKHOUSE_SOURCE_DIR}" clickhouse-build EXCLUDE_FROM_ALL)
++
++# Export the targets we care about - based on what server actually links
++set(CLICKHOUSE_LIBRARIES
++    clickhouse_parsers
++    clickhouse_common_io
++    common
++    dbms
++    # clickhouse_common_access        # For access control functions
++    # clickhouse_common_config        # For ConfigHelper functions (used by server)
++    # clickhouse_functions            # May contain some utility functions
++    # clickhouse_storages_system      # May contain ServerType utilities
++)
++# Set found flag
++set(ClickHouse_FOUND TRUE)
++set(CLICKHOUSE_FOUND TRUE)

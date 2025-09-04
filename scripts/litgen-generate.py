@@ -120,10 +120,16 @@ def autogenerate() -> None:
     # header_files = list(header_search_dir.glob("*.h"))
     # # Remove some problematic headers for now...
     # header_files = [h for h in header_files if h.name != "ASTRenameQuery.h"]
+    header_files = []
 
-    # For now, use the dummy library headers for testing
-    header_search_dir = Path(repository_dir + "/DummyLib")
-    header_files = list(header_search_dir.glob("*.h"))
+    # # For now, use the dummy library headers for testing
+    # header_search_dir = Path(repository_dir + "/DummyLib")
+    # header_files = list(header_search_dir.glob("*.h"))
+
+    # Now add in the ClickHouse headers from tmp/ClickHouse/src/Parsers as well
+    header_search_dir = Path(repository_dir + "/tmp/ClickHouse/src/Parsers")
+    header_files.extend(list(header_search_dir.glob("Lexer*.h")))
+
     print(f"Processing headers: {header_files}")
 
     output_cpp_pydef_file = (

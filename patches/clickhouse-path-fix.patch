@@ -1,0 +1,41 @@
+diff --git a/cmake/dbms_glob_sources.cmake b/cmake/dbms_glob_sources.cmake
+index 01d999f3..94fce82c 100644
+--- a/cmake/dbms_glob_sources.cmake
++++ b/cmake/dbms_glob_sources.cmake
+@@ -1,24 +1,35 @@
+ macro(add_glob cur_list)
++    message(STATUS "[CH_GLOB_DEBUG] add_glob: GLOB for patterns: ${ARGN} in ${CMAKE_CURRENT_SOURCE_DIR}")
+     file(GLOB __tmp CONFIGURE_DEPENDS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${ARGN})
++    message(STATUS "[CH_GLOB_DEBUG] add_glob: Found files: ${__tmp}")
+     list(APPEND ${cur_list} ${__tmp})
++    message(STATUS "[CH_GLOB_DEBUG] add_glob: Appended to list '${cur_list}': ${${cur_list}}")
+ endmacro()
+ 
+ macro(add_headers_and_sources prefix common_path)
++    message(STATUS "[CH_GLOB_DEBUG] add_headers_and_sources: prefix='${prefix}', common_path='${common_path}'")
+     add_glob(${prefix}_headers ${common_path}/*.h)
+     add_glob(${prefix}_sources ${common_path}/*.cpp ${common_path}/*.c)
++    message(STATUS "[CH_GLOB_DEBUG] add_headers_and_sources: ${prefix}_headers='${${prefix}_headers}', ${prefix}_sources='${${prefix}_sources}'")
+ endmacro()
+ 
+ macro(add_headers_only prefix common_path)
++    message(STATUS "[CH_GLOB_DEBUG] add_headers_only: prefix='${prefix}', common_path='${common_path}'")
+     add_glob(${prefix}_headers ${common_path}/*.h)
++    message(STATUS "[CH_GLOB_DEBUG] add_headers_only: ${prefix}_headers='${${prefix}_headers}'")
+ endmacro()
+ 
+ # Assumes the path is under src and that src/ needs to be removed (valid for any subdirectory under src/)
+ macro(extract_into_parent_list src_list dest_list)
++    message(STATUS "[CH_GLOB_DEBUG_EXTRACT] extract_into_parent_list: src_list='${src_list}', dest_list='${dest_list}', files='${ARGN}'")
+     list(REMOVE_ITEM ${src_list} ${ARGN})
+-    file(RELATIVE_PATH relative ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
++    file(RELATIVE_PATH relative ${ClickHouse_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+     string(REPLACE "src/" "" relative ${relative})
++    message(STATUS "[CH_GLOB_DEBUG_EXTRACT] extract_into_parent_list: relative path after removing 'src/': '${relative}'")
+     foreach(file IN ITEMS ${ARGN})
+         list(APPEND ${dest_list} ${relative}/${file})
++        message(STATUS "[CH_GLOB_DEBUG_EXTRACT] extract_into_parent_list: Appended '${relative}/${file}' to '${dest_list}'")
+     endforeach()
+     set(${dest_list} "${${dest_list}}" PARENT_SCOPE)
++    message(STATUS "[CH_GLOB_DEBUG_EXTRACT] extract_into_parent_list: Final '${dest_list}' = '${${dest_list}}'")
+ endmacro()

@@ -14,23 +14,32 @@ build:
 
 # generate Python bindings
 generate-bindings:
-  uv run python scripts/litgen-generate.py
+  uv run --no-project python scripts/litgen-generate.py
 
 # download Clickhouse source
 fetch-clickhouse:
   #!/usr/bin/env sh
   if [ ! -d "tmp/ClickHouse" ]; then
     git clone --revision {{CLICKHOUSE_REVISION}} -j8 --depth 1 --recursive --shallow-submodules https://github.com/ClickHouse/ClickHouse.git tmp/ClickHouse
+    echo "Applying path fix patch..."
+    cd tmp/ClickHouse
+    git apply ../../clickhouse-path-fix.patch
+    git apply ../../patches/clickhouse-preload.patch
+    echo "Patch applied successfully."
+    cd ../..
   else
     echo "Directory tmp/ClickHouse already exists. Skipping clone."
   fi
+
+# Sync clickhouse and all submodules to appropriate revision
+# sync-clickhouse:
+
+# clean ClickHouse source
+clean-clickhouse:
+  rm -rf tmp
 
 # clean build files
 clean:
   rm -rf .venv
   rm -rf _skbuild
   rm -rf dist
-
-# clean ClickHouse source
-clean-clickhouse:
-  rm -rf tmp

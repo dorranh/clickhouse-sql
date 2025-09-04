@@ -1,1 +1,1 @@
-from clickhouse_sql._clickhouse_sql import dummy_lib as dummy  # type: ignore # noqa: F403
+from clickhouse_sql._clickhouse_sql import db as db  # type: ignore # noqa: F403
