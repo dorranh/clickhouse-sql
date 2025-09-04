@@ -23,8 +23,9 @@ fetch-clickhouse:
     git clone --revision {{CLICKHOUSE_REVISION}} -j8 --depth 1 --recursive --shallow-submodules https://github.com/ClickHouse/ClickHouse.git tmp/ClickHouse
     echo "Applying path fix patch..."
     cd tmp/ClickHouse
-    git apply ../../clickhouse-path-fix.patch
     git apply ../../patches/clickhouse-preload.patch
+    git apply ../../patches/clickhouse-config.patch
+    git apply ../../patches/clickhouse-path-fix.patch
     echo "Patch applied successfully."
     cd ../..
   else
