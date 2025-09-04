@@ -14,7 +14,7 @@ def my_litgen_options() -> litgen.LitgenOptions:
     # ///////////////////////////////////////////////////////////////////
     #  Root namespace
     # ///////////////////////////////////////////////////////////////////
-    # The namespace ClickhouseSql is the C++ root namespace for the generated bindings
+    # The namespace DB is the C++ root namespace for ClickHouse
     # (i.e. no submodule will be generated for it in the python bindings)
     options.namespaces_root = ["ClickhouseSql"]
 
@@ -44,21 +44,35 @@ def my_litgen_options() -> litgen.LitgenOptions:
     # (it is possible since it has a default value)
     options.fn_params_exclude_names__regex = "^priv_"
 
-    # Ignore template functions that cause issues
-    options.fn_exclude_by_name__regex = "^(priv_|makeASTDataType|.*Template.*)"
+            # Exclude everything except essential parsing functions
+    options.fn_exclude_by_name__regex = "^(priv_|operator|.*Template.*|.*Buffer.*|.*State.*|format.*|dump.*|clone|children|size|begin|end|.*Internal.*|parseQuery)"
 
-    # Ignore complex template constructs
-    options.class_exclude_by_name__regex = "^(.*Template.*|.*Iterator.*)"
+    # Exclude everything except essential parsing classes
+    options.class_exclude_by_name__regex = "^(.*Template.*|.*Iterator.*|.*Buffer.*|.*State.*|.*Settings.*|.*Exception.*|Expected|Pos|.*Visitor.*)"
 
     # Skip files that cause parsing issues
     options.srcmlcpp_options.ignored_warning_parts = [
-        "LitgenTemplateFunctionIgnore",
+        "LitgenTemplateFunctionIgnore",      # Ignore template function warnings
+        "LitgenClassMemberException",        # Ignore operator= and other unsupported members
         "SrcmlcppIgnoreElement"
     ]
+
+    # Configure namespace handling for ClickHouse types
+    options.namespaces_root = ["DB"]
+    options.original_location_flag_show = False
+
+    # Exclude FormattingBuffer specifically - it has reference members that can't be bound
+    options.class_exclude_by_name__regex = "^(.*Template.*|.*Iterator.*|.*Buffer.*|.*State.*|.*Settings.*|.*Exception.*|Expected|Pos|.*Visitor.*|.*FormattingBuffer.*)"
 
     # # Be more permissive with parsing errors
     # options.srcmlcpp_options.functions_api_prefixes = []
 
+
+        # ////////////////////////////////////////////////////////////////////
+    # Class inheritance configuration - simplified approach
+    # ////////////////////////////////////////////////////////////////////
+    # Focus on concrete classes only to avoid inheritance complexity
+    options.class_create_default_named_ctor__regex = "^ParserQuery$"
 
     # ////////////////////////////////////////////////////////////////////
     # Override virtual methods in python
@@ -75,7 +89,7 @@ def my_litgen_options() -> litgen.LitgenOptions:
     #  template<typename T> T MaxValue(const std::vector<T>& values);
     # will be published as: max_value_int and max_value_float
     # options.fn_template_options.add_specialization("^MinValue$", ["int", "float"], add_suffix_to_function_name=False)
-
+    # options.fn_template_options.add_specialization("^reset$", ["DB::IAST*", "DB::ASTPtr"], add_suffix_to_function_name=True)
     # ////////////////////////////////////////////////////////////////////
     # Return values policy
     # ////////////////////////////////////////////////////////////////////
@@ -128,8 +142,14 @@ def autogenerate() -> None:
 
     # Now add in the ClickHouse headers from tmp/ClickHouse/src/Parsers as well
     header_search_dir = Path(repository_dir + "/tmp/ClickHouse/src/Parsers")
-    header_files.extend(list(header_search_dir.glob("Lexer.h"))) # This works
-    header_files.extend(list(header_search_dir.glob("ParserQuery.h"))) # Testing this one which has a much larger footprint
+    header_files.extend(list(header_search_dir.glob("IParser.h")))       # IParser base class needed for parseQuery
+    header_files.extend(list(header_search_dir.glob("ParserQuery.h")))   # Parser class with constructor
+    header_files.extend(list(header_search_dir.glob("parseQuery.h")))
+    header_files.extend(list(header_search_dir.glob("IAST.h")))          # Base AST for getID() method
+    # Include just the AST types you need to identify query types
+    header_files.extend(list(header_search_dir.glob("ASTCreateQuery.h")))
+    header_files.extend(list(header_search_dir.glob("ASTSelectQuery.h")))
+
 
     print(f"Processing headers: {header_files}")
 

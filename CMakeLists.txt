@@ -6,8 +6,22 @@ project(clickhouse_sql VERSION "0.0.1")
 
 # Note: This build must be run from within the Nix development shell
 # The Nix shell provides the correct LLVM toolchain that ClickHouse expects
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23) # Note: This must match the C++ standard used in ClickHouse, otherwise the bindings will not compile.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+
+# Add OS detection to match ClickHouse's expectations
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set (OS_DARWIN 1)
+    add_definitions(-D OS_DARWIN)
+    # For MAP_ANON/MAP_ANONYMOUS
+    add_definitions(-D _DARWIN_C_SOURCE)
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set (OS_LINUX 1)
+    add_definitions(-D OS_LINUX)
+elseif (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+    set (OS_FREEBSD 1)
+    add_definitions(-D OS_FREEBSD)
+endif()
 
 include(litgen_cmake/litgen_cmake.cmake)
 
@@ -32,7 +46,6 @@ add_subdirectory(DummyLib)
 litgen_find_nanobind()
 
 set(python_module_sources
-    _pydef_nanobind/module.cpp
     _pydef_nanobind/nanobind_ClickHouseParsers.cpp
 )
 nanobind_add_module(_clickhouse_sql ${python_module_sources})
@@ -62,7 +75,6 @@ target_include_directories(_clickhouse_sql SYSTEM BEFORE PRIVATE
 # Add preprocessor definitions for ClickHouse and nanobind compatibility
 target_compile_definitions(_clickhouse_sql PRIVATE
     _XOPEN_SOURCE=700     # Required for ucontext routines on macOS
-    _DARWIN_C_SOURCE=1    # Enable Darwin/macOS specific features like NSIG
     _BSD_SOURCE=1         # Required for BSD-specific features
     _DEFAULT_SOURCE=1     # Enable default set of features
     _GNU_SOURCE=1         # Enable GNU extensions (may be needed for some ClickHouse code)

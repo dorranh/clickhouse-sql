@@ -3,12 +3,10 @@
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
-
 namespace nb = nanobind;
 
-
-void py_init_module_clickhouse_sql(nb::module_& m);
-
+// Forward declaration of our minimal binding function
+void init_clickhouse_parsers(nb::module_& m);
 
 // This builds the native python module `_clickhouse_sql`
 // it will be wrapped in a standard python module `clickhouse_sql`
@@ -20,5 +18,6 @@ NB_MODULE(_clickhouse_sql, m)
     m.attr("__version__") = "dev";
     #endif
 
-    py_init_module_clickhouse_sql(m);
+    // Initialize our minimal ClickHouse parser bindings
+    init_clickhouse_parsers(m);
 }
