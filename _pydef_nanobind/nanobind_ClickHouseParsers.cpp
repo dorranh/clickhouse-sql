@@ -25,6 +25,7 @@
 #include <Parsers/ASTWithElement.h>
 #include <Parsers/ASTQueryWithOutput.h>
 #include <Parsers/ASTQueryWithTableAndOutput.h>
+#include <Parsers/ASTQueryWithOnCluster.h>
 
 // Expression and Literal Headers
 #include <Parsers/ASTLiteral.h>
@@ -223,6 +224,35 @@ NB_MODULE(_clickhouse_sql, m) {
           nb::arg("query"),
           "Parse a SQL query string and return the IAST node");
 
+    // Helper function to create clean AST dump
+    m.def("dump_ast_clean", [](std::shared_ptr<DB::IAST> ast, size_t indent_size) -> std::string {
+        std::function<std::string(std::shared_ptr<DB::IAST>, size_t)> dump_recursive =
+            [&](std::shared_ptr<DB::IAST> node, size_t current_indent) -> std::string {
+                if (!node) return "";
+
+                // Create indentation
+                std::string indent_str(current_indent * indent_size, ' ');
+
+                // Get node ID and clean it (remove memory address)
+                std::string node_id = node->getID('_');
+                size_t comma_pos = node_id.find(',');
+                if (comma_pos != std::string::npos) {
+                    node_id = node_id.substr(0, comma_pos);
+                }
+
+                std::string result = indent_str + node_id + "\n";
+
+                // Recursively process children
+                for (const auto& child : node->children) {
+                    result += dump_recursive(child, current_indent + 1);
+                }
+
+                return result;
+            };
+
+        return dump_recursive(ast, 0);
+    }, nb::arg("ast"), nb::arg("indent_size") = 2, "Create a clean AST dump without memory addresses");
+
     // Expose QueryKind enum values as module constants
     m.attr("QUERY_KIND_NONE") = static_cast<int>(DB::IAST::QueryKind::None);
     m.attr("QUERY_KIND_SELECT") = static_cast<int>(DB::IAST::QueryKind::Select);
@@ -239,7 +269,20 @@ NB_MODULE(_clickhouse_sql, m) {
 
     // Base AST Classes
     nb::class_<DB::IAST>(m, "IAST")
-        .def("getID", [](const DB::IAST& self) { return self.getID('_'); }, "Get AST node ID");
+        .def("getID", [](const DB::IAST& self) { return self.getID('_'); }, "Get AST node ID")
+        .def("getChildren", [](const DB::IAST& self) -> std::vector<std::shared_ptr<DB::IAST>> {
+            std::vector<std::shared_ptr<DB::IAST>> result;
+            for (const auto& child : self.children) {
+                result.push_back(child);
+            }
+            return result;
+        }, "Get children nodes")
+        .def("getChildrenCount", [](const DB::IAST& self) -> size_t {
+            return self.children.size();
+        }, "Get number of children")
+        .def("dumpTree", [](const DB::IAST& self, size_t indent) -> std::string {
+            return self.dumpTree(indent);
+        }, "Dump AST tree as string", nb::arg("indent") = 0);
 
     nb::class_<DB::ASTWithAlias, DB::IAST>(m, "ASTWithAlias")
         .def("getID", [](const DB::ASTWithAlias& self) { return self.getID('_'); }, "Get AST node ID");
@@ -249,6 +292,8 @@ NB_MODULE(_clickhouse_sql, m) {
 
     nb::class_<DB::ASTQueryWithTableAndOutput, DB::ASTQueryWithOutput>(m, "ASTQueryWithTableAndOutput")
         .def("getID", [](const DB::ASTQueryWithTableAndOutput& self) { return self.getID('_'); }, "Get AST node ID");
+
+
 
     // Expression and Literal Nodes
     nb::class_<DB::ASTLiteral, DB::ASTWithAlias>(m, "ASTLiteral")
@@ -277,7 +322,17 @@ NB_MODULE(_clickhouse_sql, m) {
 
     // Column and Table Structure
     nb::class_<DB::ASTExpressionList, DB::IAST>(m, "ASTExpressionList")
-        .def("getID", [](const DB::ASTExpressionList& self) { return self.getID('_'); }, "Get AST node ID");
+        .def("getID", [](const DB::ASTExpressionList& self) { return self.getID('_'); }, "Get AST node ID")
+        .def("getExpressions", [](const DB::ASTExpressionList& self) -> std::vector<std::shared_ptr<DB::IAST>> {
+            std::vector<std::shared_ptr<DB::IAST>> result;
+            for (const auto& child : self.children) {
+                result.push_back(child);
+            }
+            return result;
+        }, "Get list of expressions")
+        .def("size", [](const DB::ASTExpressionList& self) -> size_t {
+            return self.children.size();
+        }, "Get number of expressions");
 
     nb::class_<DB::ASTColumnDeclaration, DB::IAST>(m, "ASTColumnDeclaration")
         .def("getID", [](const DB::ASTColumnDeclaration& self) { return self.getID('_'); }, "Get AST node ID");
@@ -342,7 +397,10 @@ NB_MODULE(_clickhouse_sql, m) {
         .def("getID", [](const DB::ASTSelectQuery& self) { return self.getID('_'); }, "Get AST node ID");
 
     nb::class_<DB::ASTSelectWithUnionQuery, DB::ASTQueryWithOutput>(m, "ASTSelectWithUnionQuery")
-        .def("getID", [](const DB::ASTSelectWithUnionQuery& self) { return self.getID('_'); }, "Get AST node ID");
+        .def("getID", [](const DB::ASTSelectWithUnionQuery& self) { return self.getID('_'); }, "Get AST node ID")
+        .def("getListOfSelects", [](const DB::ASTSelectWithUnionQuery& self) -> std::shared_ptr<DB::IAST> {
+            return self.list_of_selects;
+        }, "Get the list of SELECT queries");
 
     nb::class_<DB::ASTSelectIntersectExceptQuery, DB::ASTSelectQuery>(m, "ASTSelectIntersectExceptQuery")
         .def("getID", [](const DB::ASTSelectIntersectExceptQuery& self) { return self.getID('_'); }, "Get AST node ID");
@@ -358,7 +416,10 @@ NB_MODULE(_clickhouse_sql, m) {
         .def("getID", [](const DB::ASTColumns& self) { return self.getID('_'); }, "Get AST node ID");
 
     nb::class_<DB::ASTCreateQuery, DB::ASTQueryWithTableAndOutput>(m, "ASTCreateQuery")
-        .def("getID", [](const DB::ASTCreateQuery& self) { return self.getID('_'); }, "Get AST node ID");
+        .def("getID", [](const DB::ASTCreateQuery& self) { return self.getID('_'); }, "Get AST node ID")
+        .def("getCluster", [](const DB::ASTCreateQuery& self) -> std::string {
+            return self.cluster;
+        }, "Get the cluster name from ON CLUSTER clause");
 
     nb::class_<DB::ASTCreateIndexQuery, DB::ASTQueryWithTableAndOutput>(m, "ASTCreateIndexQuery")
         .def("getID", [](const DB::ASTCreateIndexQuery& self) { return self.getID('_'); }, "Get AST node ID");
@@ -376,7 +437,10 @@ NB_MODULE(_clickhouse_sql, m) {
         .def("getID", [](const DB::ASTCreateNamedCollectionQuery& self) { return self.getID('_'); }, "Get AST node ID");
 
     nb::class_<DB::ASTDropQuery, DB::ASTQueryWithTableAndOutput>(m, "ASTDropQuery")
-        .def("getID", [](const DB::ASTDropQuery& self) { return self.getID('_'); }, "Get AST node ID");
+        .def("getID", [](const DB::ASTDropQuery& self) { return self.getID('_'); }, "Get AST node ID")
+        .def("getCluster", [](const DB::ASTDropQuery& self) -> std::string {
+            return self.cluster;
+        }, "Get the cluster name from ON CLUSTER clause");
 
     nb::class_<DB::ASTDropIndexQuery, DB::ASTQueryWithTableAndOutput>(m, "ASTDropIndexQuery")
         .def("getID", [](const DB::ASTDropIndexQuery& self) { return self.getID('_'); }, "Get AST node ID");
@@ -397,7 +461,10 @@ NB_MODULE(_clickhouse_sql, m) {
         .def("getID", [](const DB::ASTAlterCommand& self) { return self.getID('_'); }, "Get AST node ID");
 
     nb::class_<DB::ASTAlterQuery, DB::ASTQueryWithTableAndOutput>(m, "ASTAlterQuery")
-        .def("getID", [](const DB::ASTAlterQuery& self) { return self.getID('_'); }, "Get AST node ID");
+        .def("getID", [](const DB::ASTAlterQuery& self) { return self.getID('_'); }, "Get AST node ID")
+        .def("getCluster", [](const DB::ASTAlterQuery& self) -> std::string {
+            return self.cluster;
+        }, "Get the cluster name from ON CLUSTER clause");
 
     nb::class_<DB::ASTAlterNamedCollectionQuery, DB::IAST>(m, "ASTAlterNamedCollectionQuery")
         .def("getID", [](const DB::ASTAlterNamedCollectionQuery& self) { return self.getID('_'); }, "Get AST node ID");
@@ -423,7 +490,10 @@ NB_MODULE(_clickhouse_sql, m) {
         .def("getID", [](const DB::ASTSetQuery& self) { return self.getID('_'); }, "Get AST node ID");
 
     nb::class_<DB::ASTSystemQuery, DB::IAST>(m, "ASTSystemQuery")
-        .def("getID", [](const DB::ASTSystemQuery& self) { return self.getID('_'); }, "Get AST node ID");
+        .def("getID", [](const DB::ASTSystemQuery& self) { return self.getID('_'); }, "Get AST node ID")
+        .def("getCluster", [](const DB::ASTSystemQuery& self) -> std::string {
+            return self.cluster;
+        }, "Get the cluster name from ON CLUSTER clause");
 
     nb::class_<DB::ASTOptimizeQuery, DB::ASTQueryWithTableAndOutput>(m, "ASTOptimizeQuery")
         .def("getID", [](const DB::ASTOptimizeQuery& self) { return self.getID('_'); }, "Get AST node ID");
