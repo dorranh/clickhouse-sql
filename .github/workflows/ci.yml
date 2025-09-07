@@ -6,6 +6,9 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
@@ -16,13 +19,21 @@ jobs:
       - uses: actions/checkout@v5
       # Nix
       - uses: DeterminateSystems/nix-installer-action@main
+        name: Setup - Nix
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+        name: Setup - Magic Nix cache
       # Caching
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2
       # TODO: Add ClickHouse src caching (fetching is sloooooow)
       # Build
+      - name: 🔧 Fetch ClickHouse
+        run: nix develop --command bash -c 'just fetch-clickhouse'
+
       - name: 🔧 Build wheels
         run: nix develop --command bash -c 'just build-ci'
+
+      # TODO: Save ccache directory to GHA cache
+
+      # TODO: Save uv cache to GHA cache
 
       - uses: actions/upload-artifact@v4
         with:
