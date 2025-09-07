@@ -11,21 +11,25 @@ install: install-dev
   uv pip install . --verbose
 
 # build Python wheel
-build:
+build: install-dev
   # Disabling build isolation to allow for caching of the ClickHouse build
-  uv build --no-build-isolation --verbose
+  uv build --no-build-isolation --wheel --verbose
+
+# build using cibuildwheel (for publishing)
+build-ci: install-dev
+  uv run --only-dev python -m cibuildwheel --output-dir wheelhouse
 
 # download Clickhouse source
 fetch-clickhouse:
   #!/usr/bin/env sh
   if [ ! -d "tmp/ClickHouse" ]; then
     git clone --revision {{CLICKHOUSE_REVISION}} -j8 --depth 1 --recursive --shallow-submodules https://github.com/ClickHouse/ClickHouse.git tmp/ClickHouse
-    echo "Applying path fix patch..."
+    echo "Applying patches..."
     cd tmp/ClickHouse
     git apply ../../patches/clickhouse-preload.patch
     git apply ../../patches/clickhouse-config.patch
     git apply ../../patches/clickhouse-path-fix.patch
-    echo "Patch applied successfully."
+    echo "Patches applied successfully."
     cd ../..
   else
     echo "Directory tmp/ClickHouse already exists. Skipping clone."

@@ -5,7 +5,8 @@ description = "Python bindings to the ClickHouse SQL parser"
 authors = [
     {name = "Dorran Howell",email = "dorranh@appalachian.dev"}
 ]
-license = "MIT"
+license = "MIT AND Apache-2.0"
+license-files = ["LICENSE.md", "LICENSE-APACHE"]
 readme = "README.md"
 requires-python = ">=3.11"
 
@@ -42,6 +43,10 @@ wheel.packages = ["_stubs/clickhouse_sql"]
 
 build.verbose = true
 logging.level = "INFO"
+
+[tool.cibuildwheel]
+build = "cp312-*"
+
 
 [tool.ruff]
 line-length = 100
