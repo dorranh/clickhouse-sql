@@ -23,10 +23,11 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
     add_definitions(-D OS_FREEBSD)
 endif()
 
+# TODO: We can remove this if litgen is unused
 include(litgen_cmake/litgen_cmake.cmake)
 
 #####################################################################
-# ClickHouse integration via find_package
+# ClickHouse build integration via find_package
 #####################################################################
 
 # Add ClickHouse source directory to CMAKE_PREFIX_PATH so find_package can find it
@@ -67,9 +68,9 @@ target_compile_options(_clickhouse_sql PRIVATE
 # Add system headers BEFORE any transitive includes to ensure proper header resolution
 target_include_directories(_clickhouse_sql SYSTEM BEFORE PRIVATE
     # Include system C headers first (for fundamental types like int32_t, ldiv_t, etc.)
-    /nix/store/zm6nfi7l8yq7s0i3m52pxj00nr3n76j5-apple-sdk-15.2/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+    $ENV{_CH_SQL_BUILD_APPLE_SDK_INCLUDE}
     # Then include ClickHouse's libc++ headers (which depend on the C headers above)
-    /nix/store/vkdffdlbi5yfdkl50fwc07v33h5z4qkb-libcxx-19.1.7-dev/include/c++/v1
+    $ENV{_CH_SQL_BUILD_LIBCXX_INCLUDE}
 )
 
 # Add preprocessor definitions for ClickHouse and nanobind compatibility
@@ -79,10 +80,6 @@ target_compile_definitions(_clickhouse_sql PRIVATE
     _DEFAULT_SOURCE=1     # Enable default set of features
     _GNU_SOURCE=1         # Enable GNU extensions (may be needed for some ClickHouse code)
 )
-
-# Now we can directly use ClickHouse targets!
-# No need for imported targets or manual library collection.
-# CMake will handle all dependencies automatically.
 
 # Link against the ClickHouse targets using proper CMake target linking
 # Now we can directly link to the ClickHouse target - much cleaner!
@@ -103,18 +100,8 @@ target_link_options(_clickhouse_sql PRIVATE
     -Wl,-dead_strip_dylibs
     -Wl,-dead_strip
     # Keep the Nix libc++ path for compilation compatibility but prefer static linking
-    -Wl,-rpath,/nix/store/nzvfa327cd5gan08ijkn465kbanbizpg-libcxx-19.1.7/lib
+    -Wl,-rpath,$ENV{_CH_SQL_BUILD_LIBCXX_LIB}
 )
-
-#     # System libraries that ClickHouse might need
-#     pthread
-#     dl
-#     m
-#     # macOS frameworks
-#     "-framework CoreFoundation"
-#     "-framework Security"
-#     "-framework SystemConfiguration"
-# )
 
 # Include dummy library headers and ClickHouse headers
 target_include_directories(_clickhouse_sql PRIVATE

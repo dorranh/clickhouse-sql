@@ -49,7 +49,17 @@
           export SDKROOT=${pkgs.apple-sdk_15}/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
           # LDFLAGS are used for linking against Nix libc++ libraries. Note that this can't be passed to the Clickhouse build
           export LDFLAGS="-L${pkgs.llvmPackages_19.libcxx.out}/lib"
+
+          # Custom environment variables for CMake build (prefixed to avoid conflicts)
+          export _CH_SQL_BUILD_APPLE_SDK_INCLUDE=${pkgs.apple-sdk_15}/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+          export _CH_SQL_BUILD_LIBCXX_INCLUDE=${pkgs.llvmPackages_19.libcxx.dev}/include/c++/v1
+          export _CH_SQL_BUILD_LIBCXX_LIB=${pkgs.llvmPackages_19.libcxx.out}/lib
+
           echo "DevShell: using LLVM 19 clang + libc++ + Apple SDK 15"
+          echo "CMake build paths:"
+          echo "  Apple SDK headers: $_CH_SQL_BUILD_APPLE_SDK_INCLUDE"
+          echo "  libc++ headers: $_CH_SQL_BUILD_LIBCXX_INCLUDE"
+          echo "  libc++ libraries: $_CH_SQL_BUILD_LIBCXX_LIB"
         '';
       };
     });

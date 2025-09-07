@@ -1,6 +1,8 @@
+# ClickHouse revision to use. Note that the build may break when changing
+# this since it may be sensitive to the LLVM version, etc.
 CLICKHOUSE_REVISION := "0a8bf8ff305fe56974a42de65cf8ec8b3e497ee6"
 
-# install dev dependencies
+# create local virtual environment
 install-dev:
   uv sync --no-install-project
 
@@ -10,11 +12,8 @@ install: install-dev
 
 # build Python wheel
 build:
-  uv build
-
-# generate Python bindings
-# generate-bindings:
-#   uv run --no-project python scripts/litgen-generate.py
+  # Disabling build isolation to allow for caching of the ClickHouse build
+  uv build --no-build-isolation --verbose
 
 # download Clickhouse source
 fetch-clickhouse:
@@ -31,9 +30,6 @@ fetch-clickhouse:
   else
     echo "Directory tmp/ClickHouse already exists. Skipping clone."
   fi
-
-# Sync clickhouse and all submodules to appropriate revision
-# sync-clickhouse:
 
 # clean ClickHouse source
 clean-clickhouse:
