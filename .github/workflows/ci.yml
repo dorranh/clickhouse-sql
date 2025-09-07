@@ -3,8 +3,8 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+  build:
+    name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -16,25 +16,37 @@ jobs:
         os: [macos-14]
 
     steps:
+      # Checkout
       - uses: actions/checkout@v5
+
       # Nix
       - uses: DeterminateSystems/nix-installer-action@main
         name: Setup - Nix
       - uses: DeterminateSystems/magic-nix-cache-action@main
         name: Setup - Magic Nix cache
+
+      # A few brew deps (to appease ClickHouse...)
+      - name: Setup - MacOS
+        if: ${{ startsWith(matrix.os, 'macos-') }}
+        run: brew install findutils grep
+
       # Caching
-      # TODO: Add ClickHouse src caching (fetching is sloooooow)
+      # TODO: Save ccache directory to GHA cache
+      # TODO: Save uv cache to GHA cache
+      - uses: actions/cache@v4
+        with:
+          path: |
+            tmp/ClickHouse
+          key: ${{ runner.os }}-${{ hashFiles('Justfile') }}
+
       # Build
       - name: 🔧 Fetch ClickHouse
         run: nix develop --command bash -c 'just fetch-clickhouse'
-
       - name: 🔧 Build wheels
         run: nix develop --command bash -c 'just build-ci'
 
-      # TODO: Save ccache directory to GHA cache
-
-      # TODO: Save uv cache to GHA cache
-
+      # Uploads
+      # TODO: Only do this on PR builds and main branch
       - uses: actions/upload-artifact@v4
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
