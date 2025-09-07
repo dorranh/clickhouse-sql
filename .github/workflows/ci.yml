@@ -22,7 +22,7 @@ jobs:
       # TODO: Add ClickHouse src caching (fetching is sloooooow)
       # Build
       - name: 🔧 Build wheels
-        run: just build-ci
+        run: nix develop --command bash -c 'just build-ci'
 
       - uses: actions/upload-artifact@v4
         with:
