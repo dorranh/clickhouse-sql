@@ -13,8 +13,8 @@ build:
   uv build
 
 # generate Python bindings
-generate-bindings:
-  uv run --no-project python scripts/litgen-generate.py
+# generate-bindings:
+#   uv run --no-project python scripts/litgen-generate.py
 
 # download Clickhouse source
 fetch-clickhouse:
