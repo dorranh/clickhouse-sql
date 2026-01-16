@@ -98,12 +98,17 @@ target_link_options(_clickhouse_sql PRIVATE
     # Link ClickHouse's static libc++ explicitly
     -L${CMAKE_BINARY_DIR}/clickhouse-build/contrib/libcxx-cmake
     -lcxx
-    # Remove any unnecessary dynamic library dependencies
-    -Wl,-dead_strip_dylibs
-    -Wl,-dead_strip
     # Keep the Nix libc++ path for compilation compatibility but prefer static linking
     -Wl,-rpath,$ENV{_CH_SQL_BUILD_LIBCXX_LIB}
 )
+
+if (OS_DARWIN)
+    # Remove any unnecessary dynamic library dependencies
+    target_link_options(_clickhouse_sql PRIVATE
+        -Wl,-dead_strip_dylibs
+        -Wl,-dead_strip
+    )
+endif()
 
 # Include dummy library headers and ClickHouse headers
 target_include_directories(_clickhouse_sql PRIVATE
