@@ -1,6 +1,8 @@
 # ClickHouse revision to use. Note that the build may break when changing
 # this since it may be sensitive to the LLVM version, etc.
 CLICKHOUSE_REVISION := "0a8bf8ff305fe56974a42de65cf8ec8b3e497ee6"
+NANOBIND_REVISION := "116e098cfa96effca2a54e32e0ce5b93abe25393"
+
 
 # create local virtual environment
 install-dev:
@@ -18,6 +20,15 @@ build: install-dev
 # build using cibuildwheel (for publishing)
 build-ci: install-dev
   uv run --only-dev python -m cibuildwheel --output-dir wheelhouse
+
+# download nanobind source
+fetch-nanobind:
+  #!/usr/bin/env sh
+  if [ ! -d "tmp/nanobind" ]; then
+    git clone --revision {{NANOBIND_REVISION}} -j8 --depth 1 --recursive --shallow-submodules https://github.com/wjakob/nanobind.git tmp/nanobind
+  else
+    echo "Directory tmp/nanobind already exists. Skipping clone."
+  fi
 
 # download Clickhouse source
 fetch-clickhouse:

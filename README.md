@@ -121,4 +121,4 @@ $ just clean-clickhouse
 This project is licensed under the MIT License.
 
 It depends on [`ClickHouse`](https://github.com/ClickHouse/ClickHouse), which is
-licensed under the Apache License 2.0. See LICENSE-APACHE for details.
+licensed under the Apache License 2.0. See LICENSE-APACHE for details.****
