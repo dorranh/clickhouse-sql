@@ -42,6 +42,7 @@ jobs:
           path: |
             .cache/ccache
             .cache/uv
+            _skbuild
             tmp/ClickHouse
           key: ${{ runner.os }}-cache-${{ hashFiles('flake.nix', 'flake.lock', 'Justfile') }}
           restore-keys: |
@@ -92,6 +93,7 @@ jobs:
           path: |
             .cache/ccache
             .cache/uv
+            _skbuild
             tmp/ClickHouse
           key: ${{ runner.os }}-cache-${{ hashFiles('flake.nix', 'flake.lock', 'Justfile') }}
           restore-keys: |
