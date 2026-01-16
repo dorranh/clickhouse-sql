@@ -64,3 +64,41 @@ jobs:
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
+
+  build-linux:
+    name: Build on ubuntu-latest (non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPRESS: "true"
+      CCACHE_DIR: ${{ github.workspace }}/.cache/ccache
+      CCACHE_MAXSIZE: 2G
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: DeterminateSystems/nix-installer-action@main
+        name: Setup - Nix
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+        name: Setup - Magic Nix cache
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .cache/ccache
+            .cache/uv
+            tmp/ClickHouse
+          key: ${{ runner.os }}-cache-${{ hashFiles('flake.nix', 'flake.lock', 'Justfile') }}
+          restore-keys: |
+            ${{ runner.os }}-cache-
+
+      - name: 🔧 Fetch ClickHouse
+        run: nix develop --command bash -c 'just fetch-clickhouse'
+
+      - name: 🔧 Build
+        run: nix develop --command bash -c 'just build'
