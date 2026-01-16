@@ -116,6 +116,13 @@ An optionally to clean the local checkout of ClickHouse:
 $ just clean-clickhouse
 ```
 
+### Build notes
+
+- Avoid adding SDK/libc++ include paths or `-nostdinc++` flags globally in
+  `CMakeLists.txt`. This can leak into the ClickHouse build and cause missing
+  C standard types (e.g., `size_t`) on macOS. Keep these flags scoped to the
+  `_clickhouse_sql` target only.
+
 ## License
 
 This project is licensed under the MIT License.

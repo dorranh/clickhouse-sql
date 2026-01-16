@@ -6,32 +6,26 @@
 cmake_minimum_required(VERSION 3.15...3.27)
 project(clickhouse_sql VERSION "0.0.1")
 
+# Note: This build must be run from within the Nix development shell
 # The Nix shell provides the correct LLVM toolchain that ClickHouse expects
 set(CMAKE_CXX_STANDARD 23) # Note: This must match the C++ standard used in ClickHouse, otherwise the bindings will not compile.
-
-# Set global CXX flags for Nix-provided libraries (now allowed by our ClickHouse patch)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-message(STATUS "Global CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
-
-message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 
 # Add OS detection to match ClickHouse's expectations
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set (OS_DARWIN 1)
-    message(STATUS "Building on macOS")
     add_definitions(-D OS_DARWIN)
     # For MAP_ANON/MAP_ANONYMOUS
     add_definitions(-D _DARWIN_C_SOURCE)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set (OS_LINUX 1)
-    message(STATUS "Building on Linux")
     add_definitions(-D OS_LINUX)
-else ()
-    message(FATAL_ERROR "Building on unsupported system.")
+elseif (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
+    set (OS_FREEBSD 1)
+    add_definitions(-D OS_FREEBSD)
 endif()
 
-# Note: Still using some macros, etc from this even without the litgen binding
-#   generation.
+# TODO: We can remove this if litgen is unused
 include(litgen_cmake/litgen_cmake.cmake)
 
 #####################################################################
@@ -43,17 +37,6 @@ list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tmp/ClickHouse")
 
 # Find ClickHouse package (uses our custom ClickHouseConfig.cmake)
 find_package(ClickHouse REQUIRED)
-
-#####################################################################
-# Post-clickhouse compiler flags
-#####################################################################
-# These need to be set after calling find_package to avoid conflicts with ClickHouse's compiler flags
-# (it has a bunch of custom stuff related to its own libc++ and other dependencies).
-if (OS_DARWIN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -nostdinc++ -isystem $ENV{_CH_SQL_BUILD_LIBCXX_INCLUDE}")
-elseif (OS_LINUX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -nostdinc++ -isysroot $ENV{_CH_SQL_BUILD_GLIBC_INCLUDE} -isystem $ENV{_CH_SQL_BUILD_LIBCXX_INCLUDE}")
-endif()
 
 #####################################################################
 # Dummy library setup
@@ -70,8 +53,9 @@ set(python_module_sources
 )
 nanobind_add_module(_clickhouse_sql ${python_module_sources})
 
-# These options should apply to all platforms
+# Ensure we use Nix libc++ headers and avoid Apple system C++ headers
 target_compile_options(_clickhouse_sql PRIVATE
+    # -stdlib=libc++
     -Wno-unknown-warning-option
     -Wno-error=offsetof-within-non-standard-layout
     # Allow C++23 extensions since ClickHouse uses them (uz suffix literals)
@@ -79,6 +63,16 @@ target_compile_options(_clickhouse_sql PRIVATE
     # Match ClickHouse's visibility settings to avoid weak symbol conflicts
     -fvisibility=hidden
     -fvisibility-inlines-hidden
+    # Force use of Nix libc++ headers to avoid Apple system header conflicts
+    -nostdinc++
+)
+
+# Add system headers BEFORE any transitive includes to ensure proper header resolution
+target_include_directories(_clickhouse_sql SYSTEM BEFORE PRIVATE
+    # Include system C headers first (for fundamental types like int32_t, ldiv_t, etc.)
+    $ENV{_CH_SQL_BUILD_APPLE_SDK_INCLUDE}
+    # Then include ClickHouse's libc++ headers (which depend on the C headers above)
+    $ENV{_CH_SQL_BUILD_LIBCXX_INCLUDE}
 )
 
 # Add preprocessor definitions for ClickHouse and nanobind compatibility

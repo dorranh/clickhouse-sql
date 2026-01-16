@@ -10,7 +10,7 @@ install-dev:
 
 # install to local virtual environment
 install: install-dev
-  uv pip install . --verbose
+  uv pip install . --verbose --no-build-isolation
 
 # build Python wheel
 build: install-dev
@@ -20,6 +20,10 @@ build: install-dev
 # build using cibuildwheel (for publishing)
 build-ci: install-dev
   uv run --only-dev python -m cibuildwheel --output-dir wheelhouse
+
+# run tests
+test:
+  uv run --only-dev pytest
 
 # download nanobind source
 fetch-nanobind:
