@@ -9,6 +9,12 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPRESS: "true"
+      CCACHE_DIR: ${{ github.workspace }}/.cache/ccache
+      CCACHE_MAXSIZE: 2G
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
     strategy:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
@@ -31,19 +37,26 @@ jobs:
         run: brew install findutils grep
 
       # Caching
-      # TODO: Save ccache directory to GHA cache
-      # TODO: Save uv cache to GHA cache
       - uses: actions/cache@v4
         with:
           path: |
+            .cache/ccache
+            .cache/uv
             tmp/ClickHouse
-          key: ${{ runner.os }}-${{ hashFiles('Justfile') }}
+          key: ${{ runner.os }}-cache-${{ hashFiles('flake.nix', 'flake.lock', 'Justfile') }}
+          restore-keys: |
+            ${{ runner.os }}-cache-
 
       # Build
       - name: 🔧 Fetch ClickHouse
         run: nix develop --command bash -c 'just fetch-clickhouse'
-      - name: 🔧 Build wheels
-        run: nix develop --command bash -c 'just build-ci'
+
+      # While debugging, run the build command directly
+      - name: 🔧 Build
+        run: nix develop --command bash -c 'just build'
+
+      # - name: 🔧 Build wheels
+      #   run: nix develop --command bash -c 'just build-ci'
 
       # Uploads
       # TODO: Only do this on PR builds and main branch

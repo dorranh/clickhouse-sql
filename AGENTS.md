@@ -13,6 +13,7 @@
 
 ## Code style
 
+- The ClickHouse build is slow. Keep it cached as much as possible.
 - C++ idiomatic and kept to minimum
 - Complex logic done at high-level in Python as much as possible
 - Use functional patterns where possible
